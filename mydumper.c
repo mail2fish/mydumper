@@ -2880,28 +2880,89 @@ void dump_schema_data(MYSQL *conn, char *database, char *table, char *filename)
 		return;
 	}
 
-	query = g_strdup_printf("SHOW CREATE TABLE `%s`.`%s`", database, table);
-	if (mysql_query(conn, query) || !(result = mysql_use_result(conn)))
+	if (strcmp(table, "qing_invite_link") == 0)
 	{
-		if (success_on_1146 && mysql_errno(conn) == 1146)
-		{
-			g_warning("Error dumping schemas (%s.%s): %s", database, table, mysql_error(conn));
-		}
-		else
-		{
-			g_critical("Error dumping schemas (%s.%s): %s", database, table, mysql_error(conn));
-			errors++;
-		}
-		g_free(query);
-		return;
+		const char *create_sql = "CREATE TABLE `invite_link_tidb` (\n\
+  `sid` bigint(20) NOT NULL,\n\
+  `ascii_sid` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,\n\
+  `account` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,  -- 邮箱/手机号\n\
+  `inviterid` int(11) unsigned NOT NULL, -- 邀请人\n\
+  `ctime` int(11) unsigned NOT NULL,  -- 邀请时间\n\
+  `mtime` int(11) unsigned NOT NULL,\n\
+  `status` smallint(2) NOT NULL,\n\
+  PRIMARY KEY (`sid`,`account`),\n\
+  KEY `_account` (`account`)\n\
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n";
+		g_string_set_size(statement, 0);
+		g_string_append(statement, create_sql);
+	}
+	else if (strcmp(table, "qing_outlinkdoc") == 0)
+	{
+		const char *create_sql = "CREATE TABLE `light_link_tidb` (\n\
+  `sid` bigint(20) NOT NULL,\n\
+  `ascii_sid` varchar(20) NOT NULL,\n\
+  `groupid` int(11) unsigned NOT NULL,\n\
+  `fileid` bigint(20) unsigned NOT NULL,\n\
+  `userid` int(11) unsigned NOT NULL COMMENT '创建 light link 的 user id', \n\
+  `ctime` int(10) unsigned NOT NULL DEFAULT '1363033208', \n\
+  `chkcode` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '12345678' COMMENT '密码',\n\
+  `clicked` int(11) NOT NULL DEFAULT '0',\n\
+  `permission` enum('read', 'write') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'write',\n\
+  `status` enum('open', 'close') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open',\n\
+  `ranges` enum('anyone', 'group', 'company') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'anyone',\n\
+  `expire_time` int(11) unsigned NOT NULL DEFAULT '0',\n\
+  `period` int(11) unsigned NOT NULL DEFAULT '0',\n\
+			PRIMARY KEY(`sid`),\n\
+			UNIQUE KEY `fileid` (`fileid`),\n\
+			KEY `userid` (`userid`),\n\
+			KEY `gid` (`groupid`))ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;\n";
+		g_string_set_size(statement, 0);
+		g_string_append(statement, create_sql);
+	}
+	else if (strcmp(table, "qing_link_member") == 0)
+	{
+		const char *create_sql = "CREATE TABLE `light_link_member_tidb` (\n\
+  `fileid` bigint(20) unsigned NOT NULL,\n\
+  `userid` int(11) unsigned NOT NULL,\n\
+  `chkcode` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,\n\
+  `permission` enum('read', 'write') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'write' COMMENT '当source为user时使用,source为qing时以link中的permisson字段为准',\n\
+  `source` enum('user', 'qing') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'qing',\n\
+  `ctime` int(11) unsigned DEFAULT '1363033208',\n\
+  `sid` bigint(20) NOT NULL,\n\
+  `ascii_sid` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,\n\
+			PRIMARY KEY(`userid`,`fileid`),\n\
+			KEY `index_fileid` (`fileid`))ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;\n";
+		g_string_set_size(statement, 0);
+		g_string_append(statement, create_sql);
 	}
 
-	g_string_set_size(statement, 0);
+	else
+	{
 
-	/* There should never be more than one row */
-	row = mysql_fetch_row(result);
-	g_string_append(statement, row[1]);
-	g_string_append(statement, ";\n");
+		query = g_strdup_printf("SHOW CREATE TABLE `%s`.`%s`", database, table);
+		if (mysql_query(conn, query) || !(result = mysql_use_result(conn)))
+		{
+			if (success_on_1146 && mysql_errno(conn) == 1146)
+			{
+				g_warning("Error dumping schemas (%s.%s): %s", database, table, mysql_error(conn));
+			}
+			else
+			{
+				g_critical("Error dumping schemas (%s.%s): %s", database, table, mysql_error(conn));
+				errors++;
+			}
+			g_free(query);
+			return;
+		}
+
+		g_string_set_size(statement, 0);
+
+		/* There should never be more than one row */
+		row = mysql_fetch_row(result);
+		g_string_append(statement, row[1]);
+		g_string_append(statement, ";\n");
+	}
+
 	if (!write_data((FILE *)outfile, statement))
 	{
 		g_critical("Could not write schema for %s.%s", database, table);
