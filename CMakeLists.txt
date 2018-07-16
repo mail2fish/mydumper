@@ -33,17 +33,17 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DI
 
 if (WITH_BINLOG)
 
-  add_executable(mydumper mydumper.c binlog.c server_detect.c g_unix_signal.c connection.c getPassword.c)
+  add_executable(__exec_mydumper mydumper.c binlog.c server_detect.c g_unix_signal.c connection.c getPassword.c parser.c)
 else (WITH_BINLOG)
-  add_executable(mydumper mydumper.c server_detect.c g_unix_signal.c connection.c getPassword.c)
+  add_executable(__exec_mydumper mydumper.c server_detect.c g_unix_signal.c connection.c getPassword.c parser.c)
 endif (WITH_BINLOG)
-target_link_libraries(mydumper ${MYSQL_LIBRARIES} ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} ${PCRE_PCRE_LIBRARY} ${ZLIB_LIBRARIES} stdc++)
+target_link_libraries(__exec_mydumper ${MYSQL_LIBRARIES} ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} ${PCRE_PCRE_LIBRARY} ${ZLIB_LIBRARIES} stdc++)
 
 
-add_executable(myloader myloader.c connection.c getPassword.c)
-target_link_libraries(myloader ${MYSQL_LIBRARIES} ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} ${PCRE_PCRE_LIBRARY} ${ZLIB_LIBRARIES} stdc++)
+add_executable(__exec_myloader myloader.c connection.c getPassword.c)
+target_link_libraries(__exec_myloader ${MYSQL_LIBRARIES} ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES} ${PCRE_PCRE_LIBRARY} ${ZLIB_LIBRARIES} stdc++)
 
-INSTALL(TARGETS mydumper myloader
+INSTALL(TARGETS __exec_mydumper __exec_myloader
   RUNTIME DESTINATION bin
 )
 
@@ -56,8 +56,8 @@ OPTION(RUN_CPPCHECK "Run cppcheck" OFF)
 
 IF(RUN_CPPCHECK)
   include(CppcheckTargets)
-  add_cppcheck(mydumper)
-  add_cppcheck(myloader)
+  add_cppcheck(__exec_mydumper)
+  add_cppcheck(__exec_myloader)
 ENDIF(RUN_CPPCHECK)
 
 

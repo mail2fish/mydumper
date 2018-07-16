@@ -22,79 +22,108 @@
 #ifndef _mydumper_h
 #define _mydumper_h
 
-enum job_type { JOB_SHUTDOWN, JOB_RESTORE, JOB_DUMP, JOB_DUMP_NON_INNODB, JOB_SCHEMA, JOB_VIEW, JOB_TRIGGERS, JOB_SCHEMA_POST, JOB_BINLOG, JOB_LOCK_DUMP_NON_INNODB };
+enum job_type
+{
+	JOB_SHUTDOWN,
+	JOB_RESTORE,
+	JOB_DUMP,
+	JOB_DUMP_NON_INNODB,
+	JOB_SCHEMA,
+	JOB_VIEW,
+	JOB_TRIGGERS,
+	JOB_SCHEMA_POST,
+	JOB_BINLOG,
+	JOB_LOCK_DUMP_NON_INNODB
+};
 
-struct configuration {
+struct configuration
+{
 	char use_any_index;
-	GAsyncQueue* queue;
-	GAsyncQueue* queue_less_locking;
-	GAsyncQueue* ready;
-	GAsyncQueue* ready_less_locking;
-	GAsyncQueue* unlock_tables;
-	GMutex* mutex;
+	GAsyncQueue *queue;
+	GAsyncQueue *queue_less_locking;
+	GAsyncQueue *ready;
+	GAsyncQueue *ready_less_locking;
+	GAsyncQueue *unlock_tables;
+	GMutex *mutex;
 	int done;
 };
 
-struct thread_data {
-        struct configuration *conf;
-        guint thread_id;
+struct thread_data
+{
+	struct configuration *conf;
+	guint thread_id;
 };
 
-struct job {
+struct job
+{
 	enum job_type type;
 	void *job_data;
 	struct configuration *conf;
 };
 
-struct table_job {
+struct table_job
+{
 	char *database;
 	char *table;
 	char *filename;
 	char *where;
 };
 
-struct tables_job {
-	GList* table_job_list;
+struct tables_job
+{
+	GList *table_job_list;
 };
 
-struct schema_job {
+struct schema_job
+{
 	char *database;
 	char *table;
 	char *filename;
 };
 
-struct view_job {
+struct view_job
+{
 	char *database;
 	char *table;
 	char *filename;
 	char *filename2;
 };
 
-struct schema_post_job {
+struct schema_post_job
+{
 	char *database;
 	char *filename;
 };
 
-struct restore_job {
+struct restore_job
+{
 	char *database;
 	char *table;
 	char *filename;
 };
 
-struct binlog_job {
+struct binlog_job
+{
 	char *filename;
 	guint64 start_position;
 	guint64 stop_position;
 };
 
-struct db_table {
-	char* database;
-	char* table;
+struct db_table
+{
+	char *database;
+	char *table;
 	guint64 datalength;
 };
 
-struct schema_post {
-	char* database;
+struct schema_post
+{
+	char *database;
 };
+
+#include <inttypes.h>
+#include <stdbool.h>
+
+bool parseSID(char[], GString *);
 
 #endif
